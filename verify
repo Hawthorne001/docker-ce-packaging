@@ -33,9 +33,7 @@ function verify_binaries() {
 	docker-proxy --version
 	containerd --version
 	ctr --version
-	# containerd-shim v1.6.x does not have a -v flag.
-	# TODO(thaJeztah): use -v once we switch to containerd 1.7 (see https://github.com/containerd/containerd/pull/6495)
-	containerd-shim --help
+	containerd-shim -v
 	containerd-shim-runc-v1 -v
 	containerd-shim-runc-v2 -v
 	runc --version
@@ -51,8 +49,7 @@ function verify_deb() {
 		ca-certificates \
 		curl \
 		gnupg2 \
-		lsb-release \
-		software-properties-common
+		lsb-release
 
 	DIST_ID=$(source /etc/os-release; echo "$ID")
 	DIST_VERSION=$(lsb_release -sc)

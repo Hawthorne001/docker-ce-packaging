@@ -10,14 +10,19 @@ CLI_GITCOMMIT?=$(shell cd $(realpath $(CURDIR)/../src/github.com/docker/cli) && 
 ENGINE_GITCOMMIT?=$(shell cd $(realpath $(CURDIR)/../src/github.com/docker/docker) && git rev-parse --short HEAD)
 BUILDX_GITCOMMIT?=$(shell cd $(realpath $(CURDIR)/../src/github.com/docker/buildx) && git rev-parse --short HEAD)
 
+ifdef RH_USER
+	RH_FLAGS=--secret id=rh-user,env=RH_USER --secret id=rh-pass,env=RH_PASS
+endif
 ifdef BUILD_IMAGE
 	BUILD_IMAGE_FLAG=--build-arg $(BUILD_IMAGE)
 endif
 BUILD?=DOCKER_BUILDKIT=1 \
 	docker build \
+	$(RH_FLAGS) \
 	$(BUILD_IMAGE_FLAG) \
 	--build-arg GO_IMAGE=$(GO_IMAGE) \
 	-t rpmbuild-$@/$(ARCH) \
+	--platform linux/$(ARCH) \
 	-f $@/Dockerfile \
 	.
 
@@ -41,7 +46,14 @@ RPMBUILD_FLAGS?=-ba\
 
 # Additional flags may be necessary at some point
 RUN_FLAGS=
+
+# FIXME(thaJeztah): disabling seccomp to handle (ppc64le) tar "chown / chmod"
+# failing when running in a Fedora 40 container on a Debian bookworm host;
+# see https://github.com/docker/docker-ce-packaging/issues/1012 and
+# https://github.com/docker/docker-ce-packaging/pull/1006#issuecomment-2006878743
 RUN?=docker run --rm \
+	--security-opt seccomp=unconfined \
+	--platform linux/$(ARCH) \
 	-e PLATFORM \
 	-v $(CURDIR)/rpmbuild/SOURCES:/root/rpmbuild/SOURCES:ro \
 	-v $(CURDIR)/rpmbuild/$@/RPMS:/root/rpmbuild/RPMS \
@@ -49,13 +61,9 @@ RUN?=docker run --rm \
 	$(RUN_FLAGS) \
 	rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 
-FEDORA_RELEASES ?= fedora-40 fedora-39 fedora-38
-CENTOS_RELEASES ?= centos-7 centos-8 centos-9
-ifeq ($(ARCH),s390x)
-RHEL_RELEASES ?= rhel-7
-else
-RHEL_RELEASES ?=
-endif
+FEDORA_RELEASES ?= fedora-40 fedora-41
+CENTOS_RELEASES ?= centos-9 centos-10
+RHEL_RELEASES ?= rhel-8 rhel-9
 
 DISTROS := $(FEDORA_RELEASES) $(CENTOS_RELEASES) $(RHEL_RELEASES)
 BUNDLES := $(patsubst %,rpmbuild/bundles-ce-%-$(DPKG_ARCH).tar.gz,$(DISTROS))
@@ -92,11 +100,6 @@ $(DISTROS): sources
 
 .PHONY: sources
 sources: rpmbuild/SOURCES/engine.tgz rpmbuild/SOURCES/cli.tgz rpmbuild/SOURCES/buildx.tgz rpmbuild/SOURCES/compose.tgz
-sources: rpmbuild/SOURCES/01-rlimit_nofile-rhel7.patch
-
-rpmbuild/SOURCES/%.patch:
-	mkdir -p $(@D)
-	cp $(CURDIR)/patches/$(@F) $@
 
 rpmbuild/SOURCES/engine.tgz:
 	mkdir -p $(@D)

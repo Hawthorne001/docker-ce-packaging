@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_IMAGE
+ARG GO_IMAGE=golang:latest
 ARG DISTRO=centos
 ARG SUITE=9
 ARG BUILD_IMAGE=quay.io/centos/${DISTRO}:stream${SUITE}
@@ -11,9 +11,10 @@ FROM ${BUILD_IMAGE}
 ENV GOPROXY=https://proxy.golang.org|direct
 ENV GO111MODULE=off
 ENV GOPATH=/go
-ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
-ENV AUTO_GOPATH 1
-ENV DOCKER_BUILDTAGS exclude_graphdriver_btrfs
+ENV GOTOOLCHAIN=local
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+ENV AUTO_GOPATH=1
+ENV DOCKER_BUILDTAGS=exclude_graphdriver_btrfs
 ARG DISTRO
 ARG SUITE
 ENV DISTRO=${DISTRO}
@@ -24,7 +25,7 @@ ENV SUITE=${SUITE}
 # https://forums.centos.org/viewtopic.php?f=54&t=72574, and
 # https://access.redhat.com/solutions/3720351
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
-RUN dnf install -y rpm-build rpmlint dnf-plugins-core
+RUN dnf install -y rpm-build dnf-plugins-core
 RUN dnf config-manager --set-enabled crb
 
 COPY --link SPECS /root/rpmbuild/SPECS

@@ -17,7 +17,7 @@ CHOWN:=docker run --rm -v $(CURDIR):/v -w /v alpine chown
 DEFAULT_PRODUCT_LICENSE:=Community Engine
 PACKAGER_NAME?=
 DOCKER_GITCOMMIT:=abcdefg
-GO_VERSION:=1.21.8
+GO_VERSION:=1.23.6
 PLATFORM=Docker Engine - Community
 SHELL:=/bin/bash
 VERSION?=0.0.1-dev
@@ -40,10 +40,10 @@ DOCKER_CLI_REF     ?= $(REF)
 DOCKER_ENGINE_REF  ?= $(REF)
 # DOCKER_COMPOSE_REF is the version of compose to package. It usually is a tag,
 # but can be a valid git reference in DOCKER_COMPOSE_REPO.
-DOCKER_COMPOSE_REF ?= v2.25.0
+DOCKER_COMPOSE_REF ?= v2.33.0
 # DOCKER_BUILDX_REF is the version of compose to package. It usually is a tag,
 # but can be a valid git reference in DOCKER_BUILDX_REPO.
-DOCKER_BUILDX_REF  ?= v0.13.1
+DOCKER_BUILDX_REF  ?= v0.21.0-rc2
 
 # Use "stage" to install dependencies from download-stage.docker.com during the
 # verify step. Leave empty or use any other value to install from download.docker.com

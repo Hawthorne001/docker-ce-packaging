@@ -1,23 +1,29 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_IMAGE
-ARG DISTRO=debian
-ARG SUITE=buster
-ARG VERSION_ID=10
+ARG GO_IMAGE=golang:latest
+ARG DISTRO=ubuntu
+ARG SUITE=oracular
+ARG VERSION_ID=24.10
 ARG BUILD_IMAGE=${DISTRO}:${SUITE}
 
 FROM ${GO_IMAGE} AS golang
 
 FROM ${BUILD_IMAGE}
 
+# Remove diverted man binary to prevent man-pages being replaced with "minimized" message. See docker/for-linux#639
+RUN if  [ "$(dpkg-divert --truename /usr/bin/man)" = "/usr/bin/man.REAL" ]; then \
+        rm -f /usr/bin/man; \
+        dpkg-divert --quiet --remove --rename /usr/bin/man; \
+    fi
+
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y curl devscripts equivs git
 
 ENV GOPROXY=https://proxy.golang.org|direct
 ENV GO111MODULE=off
-ENV GOPATH /go
+ENV GOPATH=/go
 ENV GOTOOLCHAIN=local
-ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
 ARG COMMON_FILES
 COPY --link ${COMMON_FILES} /root/build-deb/debian
