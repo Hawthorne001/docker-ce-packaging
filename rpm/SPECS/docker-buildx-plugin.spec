@@ -7,7 +7,7 @@ Epoch: 0
 Source0: buildx.tgz
 Summary: Docker Buildx plugin for the Docker CLI
 Group: Tools/Docker
-License: ASL 2.0
+License: Apache-2.0
 URL: https://github.com/docker/buildx
 Vendor: Docker
 Packager: Docker <support@docker.com>
@@ -37,9 +37,7 @@ ver="$(${RPM_BUILD_ROOT}%{_libexecdir}/docker/cli-plugins/docker-buildx docker-c
 	test "$ver" = "%{_buildx_version}" && echo "PASS: docker-buildx version OK" || (echo "FAIL: docker-buildx version ($ver) did not match" && exit 1)
 
 %install
-pushd ${RPM_BUILD_DIR}/src/buildx
-install -D -p -m 0755 bin/docker-buildx ${RPM_BUILD_ROOT}%{_libexecdir}/docker/cli-plugins/docker-buildx
-popd
+install -D -p -m 0755 ${RPM_BUILD_DIR}/src/buildx/bin/docker-buildx ${RPM_BUILD_ROOT}%{_libexecdir}/docker/cli-plugins/docker-buildx
 
 %files
 %{_libexecdir}/docker/cli-plugins/docker-buildx

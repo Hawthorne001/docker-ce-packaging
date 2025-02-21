@@ -22,6 +22,7 @@ BUILD?=DOCKER_BUILDKIT=1 \
 	--build-arg GO_IMAGE=$(GO_IMAGE) \
 	--build-arg COMMON_FILES=$(COMMON_FILES) \
 	-t debbuild-$@/$(ARCH) \
+	--platform linux/$(ARCH) \
 	-f $@/Dockerfile \
 	.
 
@@ -33,6 +34,7 @@ RUN_FLAGS=
 # see https://github.com/docker/docker-ce-packaging/pull/1006#issuecomment-2006878743
 RUN?=docker run --rm \
 	--security-opt seccomp=unconfined \
+	--platform linux/$(ARCH) \
 	-e PLATFORM \
 	-e EPOCH='$(EPOCH)' \
 	-e DEB_VERSION=$(word 1, $(GEN_DEB_VER)) \
@@ -48,9 +50,9 @@ RUN?=docker run --rm \
 	$(RUN_FLAGS) \
 	debbuild-$@/$(ARCH)
 
-DEBIAN_VERSIONS ?= debian-buster debian-bullseye debian-bookworm
-UBUNTU_VERSIONS ?= ubuntu-focal ubuntu-jammy ubuntu-mantic ubuntu-noble
-RASPBIAN_VERSIONS ?= raspbian-buster raspbian-bullseye raspbian-bookworm
+DEBIAN_VERSIONS ?= debian-bullseye debian-bookworm
+UBUNTU_VERSIONS ?= ubuntu-focal ubuntu-jammy ubuntu-noble ubuntu-oracular
+RASPBIAN_VERSIONS ?= raspbian-bullseye raspbian-bookworm
 DISTROS := $(DEBIAN_VERSIONS) $(UBUNTU_VERSIONS) $(RASPBIAN_VERSIONS)
 
 .PHONY: help

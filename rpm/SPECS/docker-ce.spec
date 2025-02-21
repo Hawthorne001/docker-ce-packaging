@@ -5,27 +5,19 @@ Version: %{_version}
 Release: %{_release}%{?dist}
 Epoch: 3
 Source0: engine.tgz
-Patch0: 01-rlimit_nofile-rhel7.patch
 Summary: The open-source application container engine
 Group: Tools/Docker
-License: ASL 2.0
+License: Apache-2.0
 URL: https://www.docker.com
 Vendor: Docker
 Packager: Docker <support@docker.com>
 
 Requires: /usr/sbin/groupadd
+# Provides modprobe, which we use to load br_netfilter if not loaded.
+Suggests: kmod
 Requires: docker-ce-cli
-# CentOS 7 and RHEL 7 do not yet support weak dependencies
-#
-# Note that we're not using <= 7 here, to account for other RPM distros, such
-# as Fedora, which would not have the rhel macro set (so default to 0).
-%if 0%{?rhel} == 7
-Requires: docker-ce-rootless-extras
-%else
 Recommends: docker-ce-rootless-extras
-%endif
-Requires: container-selinux >= 2:2.74
-Requires: libseccomp >= 2.3
+Requires: container-selinux
 Requires: systemd
 Requires: iptables
 %if %{undefined rhel} || 0%{?rhel} < 9
@@ -42,29 +34,18 @@ BuildRequires: cmake
 BuildRequires: gcc
 BuildRequires: git
 BuildRequires: glibc-static
-BuildRequires: libarchive
-BuildRequires: libseccomp-devel
-BuildRequires: libselinux-devel
 BuildRequires: libtool
 BuildRequires: libtool-ltdl-devel
 BuildRequires: make
 BuildRequires: pkgconfig
 BuildRequires: pkgconfig(systemd)
-BuildRequires: selinux-policy-devel
 BuildRequires: systemd-devel
 BuildRequires: tar
-BuildRequires: which
 
 # conflicting packages
 Conflicts: docker
 Conflicts: docker-io
-Conflicts: docker-engine-cs
 Conflicts: docker-ee
-
-# Obsolete packages
-Obsoletes: docker-ce-selinux
-Obsoletes: docker-engine-selinux
-Obsoletes: docker-engine
 
 %description
 Docker is a product for you to build, ship and run any application as a
@@ -79,9 +60,6 @@ depending on a particular stack or provider.
 
 %prep
 %setup -q -c -n src -a 0
-%if 0%{?rhel} == 7
-%patch -p1 -P 0
-%endif
 
 %build
 
@@ -94,6 +72,9 @@ TMP_GOPATH="/go" hack/dockerfile/install/install.sh tini
 VERSION=%{_origversion} PRODUCT=docker hack/make.sh dynbinary
 popd
 
+#  build  man-pages
+make -C ${RPM_BUILD_DIR}/src/engine/man
+
 %check
 ver="$(engine/bundles/dynbinary-daemon/dockerd --version)"; \
     test "$ver" = "Docker version %{_origversion}, build %{_gitcommit_engine}" && echo "PASS: daemon version OK" || (echo "FAIL: daemon version ($ver) did not match" && exit 1)
@@ -104,8 +85,11 @@ install -D -p -m 0755 $(readlink -f engine/bundles/dynbinary-daemon/docker-proxy
 install -D -p -m 0755 /usr/local/bin/docker-init ${RPM_BUILD_ROOT}%{_libexecdir}/docker/docker-init
 
 # install systemd scripts
-install -D -m 0644 engine/contrib/init/systemd/docker.service ${RPM_BUILD_ROOT}%{_unitdir}/docker.service
-install -D -m 0644 engine/contrib/init/systemd/docker.socket ${RPM_BUILD_ROOT}%{_unitdir}/docker.socket
+install -D -p -m 0644 engine/contrib/init/systemd/docker.service ${RPM_BUILD_ROOT}%{_unitdir}/docker.service
+install -D -p -m 0644 engine/contrib/init/systemd/docker.socket ${RPM_BUILD_ROOT}%{_unitdir}/docker.socket
+
+# install manpages
+make -C ${RPM_BUILD_DIR}/src/engine/man DESTDIR=${RPM_BUILD_ROOT} prefix=%{_mandir} install
 
 # create the config directory
 mkdir -p ${RPM_BUILD_ROOT}/etc/docker
@@ -116,6 +100,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/docker
 %{_libexecdir}/docker/docker-init
 %{_unitdir}/docker.service
 %{_unitdir}/docker.socket
+%{_mandir}/man*/*
 %dir /etc/docker
 
 %post

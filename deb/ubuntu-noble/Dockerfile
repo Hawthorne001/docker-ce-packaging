@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_IMAGE
+ARG GO_IMAGE=golang:latest
 ARG DISTRO=ubuntu
 ARG SUITE=noble
 ARG VERSION_ID=24.04
@@ -21,9 +21,9 @@ RUN apt-get update && apt-get install -y curl devscripts equivs git
 
 ENV GOPROXY=https://proxy.golang.org|direct
 ENV GO111MODULE=off
-ENV GOPATH /go
+ENV GOPATH=/go
 ENV GOTOOLCHAIN=local
-ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
 ARG COMMON_FILES
 COPY --link ${COMMON_FILES} /root/build-deb/debian

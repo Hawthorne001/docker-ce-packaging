@@ -12,8 +12,6 @@ Build-Depends: bash,
                git,
                libc-dev,
                libltdl-dev,
-               libseccomp-dev,
-               libseccomp2,
                libsystemd-dev,
                libtool,
                make,
@@ -28,7 +26,6 @@ Architecture: linux-any
 Depends: containerd.io (>= 1.6.24),
          docker-ce-cli,
          iptables,
-         libseccomp2 (>= 2.3.0),
          ${shlibs:Depends}
 Recommends: apparmor,
             ca-certificates,
@@ -38,14 +35,13 @@ Recommends: apparmor,
             pigz,
             procps,
             xz-utils
-Suggests: aufs-tools [amd64], cgroupfs-mount | cgroup-lite
+Suggests: cgroupfs-mount | cgroup-lite,
+            kmod,
 Conflicts: docker (<< 1.5~),
            docker-engine,
-           docker-engine-cs,
-           docker.io,
-           lxc-docker,
-           lxc-docker-virtual-package
-Replaces: docker-engine
+           docker.io
+Replaces: docker-engine,
+          docker-ce-cli (<< 5:28.0.0)
 Description: Docker: the open-source application container engine
  Docker is a product for you to build, ship and run any application as a
  lightweight container
@@ -64,10 +60,7 @@ Recommends: docker-buildx-plugin,
             docker-compose-plugin
 Conflicts: docker (<< 1.5~),
            docker-engine,
-           docker-engine-cs,
-           docker.io,
-           lxc-docker,
-           lxc-docker-virtual-package
+           docker.io
 Replaces: docker-ce (<< 5:0)
 Breaks: docker-ce (<< 5:0)
 Description: Docker CLI: the open-source application container engine
@@ -111,6 +104,7 @@ Homepage: https://github.com/docker/buildx
 Package: docker-compose-plugin
 Priority: optional
 Architecture: linux-any
+Recommends: docker-buildx-plugin
 Enhances: docker-ce-cli
 Description: Docker Compose (V2) plugin for the Docker CLI.
  .
